@@ -1,0 +1,45 @@
+#include "imports/stdlib.fc";
+
+;; ContractLong.fc - контракт с большим состоянием
+
+() recv_external(slice in_msg) impure {
+    ;; Обработка внешних сообщений
+    var op = in_msg~load_uint(32);
+    var sender_address = in_msg~load_msg_addr();
+    
+    if (op == 0x01) {
+        ;; Пример обработки команды с опкодом 0x01
+        var uint256_1 = in_msg~load_uint(256);
+        var uint256_2 = in_msg~load_uint(256);
+        var uint256_3 = in_msg~load_uint(256);
+        var dict_data = in_msg~load_dict();
+        var slice_address = in_msg~load_slice();
+        
+        return ();
+    }
+}
+
+() send_message(int amount, slice to, cell body, int mode) impure {
+    ;; Функция отправки сообщения
+    var msg = begin_cell()
+        .store_msg_flags_and_address_none(NON_BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_uint(0x10, 32)
+        .store_ref(body)
+    .end_cell();
+    
+    send_raw_message(msg, mode);
+}
+
+() large_state_exchange(slice data, slice addr) impure {
+    ;; Функция обмена сообщениями с другим контрактом
+    var msg = begin_cell()
+        .store_msg_flags_and_address_none(NON_BOUNCEABLE)
+        .store_slice(addr)
+        .store_coins(0)
+        .store_slice(data)
+    .end_cell();
+    
+    send_raw_message(msg, 1);
+}

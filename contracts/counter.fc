@@ -1,0 +1,58 @@
+#include "imports/stdlib.fc";
+
+() recv_external(slice in_msg_body) impure {
+    int seqno = 0;
+
+    ;; Проверка seqno для защиты от повторных сообщений
+    int incoming_seqno = in_msg_body~load_uint(32);
+    if (incoming_seqno != seqno) {
+        throw(100);
+    }
+
+    ;; Входящее внешнее сообщение
+    var op = in_msg_body~load_uint(32);
+    if (op == 1) {
+        var to = in_msg_body~load_msg_addr();
+        var amount = in_msg_body~load_coins();
+        var body = in_msg_body~load_ref();
+
+        seqno += 1;
+
+        send_simple_message(amount, to, body, true);
+    } else {
+        throw(101);
+    }
+}
+
+() recv_internal(int msg_value, cell msg_body) impure {
+    const int MIN_REQUIRED_TONS = 1 ton;
+
+    ;; Проверка, достаточно ли средств для покрытия газа
+    if (msg_value < MIN_REQUIRED_TONS) {
+        throw(101);
+    }
+
+    ;; Входящее внутреннее сообщение
+    var cs = msg_body.begin_parse();
+    var op = cs~load_uint(32);
+
+    if (op == 2) {
+        var sender = cs~load_msg_addr();
+        var response_data = cs~load_coins();
+
+        accept_message();
+
+    } else {
+        throw(102);
+    }
+}
+
+() send_simple_message(int amount, slice to, cell body, bool bounceable) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(bounceable ? BOUNCEABLE : NON_BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+    send_raw_message(msg, 1);
+}

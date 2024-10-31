@@ -1,0 +1,126 @@
+#include "imports/stdlib.fc";
+
+;; == Примеры отправки сообщений в FunC ==
+
+;; Пример 1: Простое сообщение с переводом монет
+() send_simple_message(slice to, int amount, int mode) impure inline_ref {
+    ;; Формируем сообщение с флагом NON_BOUNCEABLE
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(NON_BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+    .end_cell();
+    send_raw_message(msg, mode);
+}
+
+
+;; Пример 2: Сообщение с телом (текстом)
+() send_message_with_body(slice to, int amount, cell body, int mode) impure inline_ref {
+    ;; Формируем сообщение с флагом BOUNCEABLE
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+    send_raw_message(msg, mode);
+}
+
+
+;; Пример 3: Сообщение с указанием обработки ошибки
+() send_message_with_error_handling(slice to, int amount, cell body, int mode) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+
+    ;; Используем флаг для игнорирования ошибок
+    send_raw_message(msg, mode | 64);
+}
+
+
+;; Пример 4: Сообщение с уничтожением контракта после отправки
+() send_message_and_selfdestruct(slice to, int amount, cell body) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+    
+    ;; Используем режим для уничтожения контракта после отправки
+    send_raw_message(msg, 128);
+}
+
+
+;; Пример 5: Сообщение с пустым телом и нулевым переводом монет
+() send_empty_message(slice to, int mode) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(NON_BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(0)
+    .end_cell();
+    
+    send_raw_message(msg, mode);
+}
+
+
+;; Пример 6: Сообщение с задержкой (использование DePool)
+() send_delayed_message(slice to, int amount, cell body, int mode) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+    
+    ;; Задержка на 10 блоков
+    send_raw_message_with_delay(msg, 10, mode);
+}
+
+
+;; Пример 7: Сообщение с реферальным адресом
+() send_message_with_referral(slice to, slice referral, int amount, cell body, int mode) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_slice(referral)
+        .store_ref(body)
+    .end_cell();
+    
+    send_raw_message(msg, mode);
+}
+
+
+;; Пример 8: Сообщение с кастомным кодом операции
+() send_custom_op_message(slice to, int amount, int op_code, cell body, int mode) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_uint(op_code, 32)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+    
+    send_raw_message(msg, mode);
+}
+
+
+;; Пример 9: Отправка сообщения с возвратом средств при ошибке
+() send_message_with_fallback(slice to, int amount, cell body) impure inline_ref {
+    cell msg = begin_cell()
+        .store_msg_flags_and_address_none(BOUNCEABLE)
+        .store_slice(to)
+        .store_coins(amount)
+        .store_ref(body)
+    .end_cell();
+    
+    ;; Если произойдет ошибка, средства будут возвращены
+    send_raw_message(msg, 64);
+}
+
+
+
